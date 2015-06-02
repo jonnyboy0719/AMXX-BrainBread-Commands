@@ -16,7 +16,7 @@
 #define PLUGIN	"BrainBread Commands"
 #define AUTHOR	"Reperio Studios"
 #define VERSION	"1.0"
-#define NbWeapon 21
+#define NbWeapon 20
 
 //------------------
 //	Handles & more
@@ -24,9 +24,9 @@
 
 new TabWeapon[NbWeapon][]={
 	"44sw",
-	"benlli",
+	"benelli",
 //	"canister",
-	"hand",
+//	"hand",
 	"microuzi",
 	"microuzi_a",
 //	"knife",
