@@ -9,10 +9,10 @@ Special thanks: Snapman -- [ModRiotGaming](http://modriot.ga/)
 
 Admin Commands
 -----------
-`bb_give_weapon <name or #userid> [item]` - Gives a weapon to the player (If their skill is to low, it won't be given)
-`bb_give_ammo <name or #userid> [item] [primary] [secondary]` - Gives ammo to the player's weapon
-`bb_set_skill <name or #userid> [skill] [amount]` - Sets the chosen skill to a custom amount
-`bb_set_level <name or #userid> [level]` - Sets the players level
+`bb_give_weapon <name or #userid> [item]` - Gives a weapon to the player (If their skill is to low, it won't be given)  
+`bb_give_ammo <name or #userid> [item] [primary] [secondary]` - Gives ammo to the player's weapon  
+`bb_set_skill <name or #userid> [skill] [amount]` - Sets the chosen skill to a custom amount  
+`bb_set_level <name or #userid> [level]` - Sets the players level  
 
 Available Weapons
 -----------
