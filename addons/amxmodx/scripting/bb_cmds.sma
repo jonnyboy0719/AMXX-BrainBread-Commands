@@ -22,6 +22,8 @@
 //	Handles & more
 //------------------
 
+new bool:HasRadarDot[33]
+
 new TabWeapon[NbWeapon][]={
 	"44sw",
 	"benelli",
@@ -76,6 +78,96 @@ public plugin_init() {
 
 	// Convars
 	register_cvar ("bb_allow_adminresets", "1"); // If its set to 2, admins can reset any player (if their immunie is not the same/higher than theirs), if its its set to 1, admins can't make a full reset (level and all skills goes back to 0), and if its set to 0, resets are disabled.
+	register_cvar ("bb_show_staff", "0"); // If its set to 1, it will show all admins as orange and all mods as light blue, if its set to 0, its disabled (NOTE: it doesn't show if you are a zombie!)
+}
+
+//------------------
+//	OnPlayerSpawn()
+//------------------
+
+public OnPlayerSpawn(id)
+{
+	//if (!HasSpawned[id])
+	Show_Staff(id);
+}
+
+//------------------
+//	client_connect()
+//------------------
+
+public client_connect(id)
+{
+	HasRadarDot[id] = false;
+}
+
+//------------------
+//	client_disconnect()
+//------------------
+
+public client_disconnect(id)
+{
+	Delete_Staff(id);
+}
+
+//------------------
+//	Show_Staff()
+//------------------
+
+public Show_Staff(id)
+{
+	new bb_get_show_staff = get_cvar_num ( "bb_show_staff" )
+	if (bb_get_show_staff <= 0)
+		return PLUGIN_HANDLED
+
+	// if the player is a zombie, delete the radar dot
+	if (bb_get_user_zombie(id))
+		Delete_Staff(id);
+
+	new origin[3]
+	get_user_origin(id, origin, 0);
+
+	new players[32],num,i;
+	get_players(players, num)
+	for (i=0; i<num; i++)
+	{
+		if (is_user_connected(players[i]) && !is_user_bot(players[i]))
+		{
+			if (is_user_admin(id))
+			{
+				bb_radar(i,id,origin,1,DOT_ORANGE);
+				HasRadarDot[id] = true;
+			}
+		}
+	}
+	return PLUGIN_HANDLED
+}
+
+//------------------
+//	Delete_Staff()
+//------------------
+
+public Delete_Staff(id)
+{
+	new bb_get_show_staff = get_cvar_num ( "bb_show_staff" )
+	if (bb_get_show_staff <= 0)
+		return PLUGIN_HANDLED
+
+	if (!HasRadarDot[id])
+		return PLUGIN_HANDLED
+
+	new origin[3]
+	get_user_origin(id, origin, 0);
+
+	new players[32],num,i;
+	get_players(players, num)
+	for (i=0; i<num; i++)
+	{
+		if (is_user_connected(players[i]) && !is_user_bot(players[i]))
+		{
+			bb_radar(i,id,origin,0,DOT_ORANGE);
+		}
+	}
+	return PLUGIN_HANDLED
 }
 
 //------------------
@@ -90,8 +182,8 @@ public BBcmd_Admin_Announce(id, level, cid)
 	new arg[32], arg2[32], arg3[32]
 
 	read_argv(1, arg, 31)
-	read_argv(1, arg2, 31)
-	read_argv(1, arg3, 31)
+	read_argv(2, arg2, 31)
+	read_argv(3, arg3, 31)
 
 	new duration = str_to_num(arg)
 
@@ -100,7 +192,15 @@ public BBcmd_Admin_Announce(id, level, cid)
 		return PLUGIN_HANDLED
 	}
 
-	bb_show_message(id,duration,arg2,arg3);
+	new players[32],num,i;
+	get_players(players, num)
+	for (i=0; i<num; i++)
+	{
+		if (is_user_connected(players[i]) && !is_user_bot(players[i]))
+		{
+			bb_show_message(players[i],duration,arg2,arg3);
+		}
+	}
 
 	return PLUGIN_HANDLED
 }

@@ -184,7 +184,7 @@ stock bb_get_user_flame_ammo(id) {
 	}
 
 	if(is_valid_ent(weapon)) {
-		return get_pdata_int(weapon,176);
+		return get_pdata_int(weapon,173);
 	}
 
 	return 0;
@@ -207,8 +207,8 @@ stock bb_set_user_flame_ammo(id,ammo) {
 	}
 
 	if(is_valid_ent(weapon)) {
-		set_pdata_int(weapon,174,ammo);
-		return set_pdata_int(weapon,176,ammo);
+		set_pdata_int(weapon,173,ammo);
+		return set_pdata_int(weapon,173,ammo);
 	}
 
 	return 0;
@@ -278,7 +278,7 @@ stock bb_debugvalues(id, const weapon_index[]) {
 
 	if(is_valid_ent(weapon)) {
 		test(id, weapon);
-		return get_pdata_int(weapon,176);
+		return get_pdata_int(weapon,173);
 	}
 
 	return 0;
@@ -326,7 +326,7 @@ stock bb_get_user_minigun_ammo(id) {
 	}
 
 	if(is_valid_ent(weapon)) {
-		return get_pdata_int(weapon,176);
+		return get_pdata_int(weapon,173);
 	}
 
 	return 0;
@@ -349,8 +349,8 @@ stock bb_set_user_minigun_ammo(id,ammo) {
 	}
 
 	if(is_valid_ent(weapon)) {
-		set_pdata_int(weapon,174,ammo);
-		return set_pdata_int(weapon,176,ammo);
+		set_pdata_int(weapon,173,ammo);
+		return set_pdata_int(weapon,173,ammo);
 	}
 
 	return 0;
