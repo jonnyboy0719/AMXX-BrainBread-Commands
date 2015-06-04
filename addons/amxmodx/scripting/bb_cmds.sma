@@ -15,8 +15,8 @@
 
 #define PLUGIN	"BrainBread Commands"
 #define AUTHOR	"Reperio Studios"
-#define VERSION	"1.2"
-#define NbWeapon 20
+#define VERSION	"1.3"
+#define NbWeapon 19
 #define SteamIDs 12
 
 //------------------
@@ -64,7 +64,7 @@ new TabWeapon[NbWeapon][]={
 	"beretta",
 	"beretta_a",
 	"glock",
-	"glock_auto",
+//	"glock_auto",
 	"glock_auto_a",
 	"stoner",
 	"mp5",
@@ -73,6 +73,35 @@ new TabWeapon[NbWeapon][]={
 	"deagle",
 //	"case",
 	"ak47"
+}
+
+// Names
+new TabWeapon_name[NbWeapon][]={
+	".44 Magnum",
+	"Benelli",
+//	"Canister",
+//	"Zombie Hands",
+	"Micro Uzi",
+	"Micro Uzi (Akimbo)",
+//	"Axe",
+	"Minigun",
+	"P225",
+//	"UNKNOWN",
+	"Sawed Off",
+	"Winchester",
+	"USP",
+	"Beretta",
+	"Beretta (Akimbo)",
+	"Glock17",
+//	"Glock18 Auto",
+	"Glock18 Auto (Akimbo)",
+	"Stoner",
+	"MP5",
+	"Flamethrower",
+	"M16",
+	"Desert Eagle",
+//	"Breifcase",
+	"AK-47"
 }
 
 //------------------
@@ -745,17 +774,20 @@ public BBcmd_GiveAmmo(id, level, cid)
 
 public give_weapon(id,player,weapon_give[]){
 	new index_weapon = 0
-	index_weapon = find_weapon(weapon_give)
+	index_weapon = get_weapon(weapon_give);
 
 	if (index_weapon<0) {
 		client_print(id,print_console,"[BB] Cannot find the weapon Index!")
 		return PLUGIN_CONTINUE
 	}
 
+	// If its a zombie, lets give an error (because zombies can't carry guns)
+	if (bb_get_user_zombie(player))
+		return PLUGIN_CONTINUE
+
 	if (player) {
 		free_weapon(player,index_weapon)
-		set_hudmessage(255,100,0, 0.05,0.65, 0, 6.0, 6.0, 0.5, 0.15, 4)
-		show_hudmessage(player,"[BB] You got the weapon %s!", weapon_give)
+		client_print(id,print_chat,"[BB] You got the weapon %s!", TabWeapon_name[index_weapon])
 		return PLUGIN_CONTINUE
 	}
 	else
@@ -768,11 +800,12 @@ public give_weapon(id,player,weapon_give[]){
 }
 
 //------------------
-//	find_weapon()
+//	get_weapon()
 //------------------
 
-public find_weapon(txtweapon[]) {
+public get_weapon(txtweapon[]) {
 	new weapon_index
+
 	weapon_index = -1
 	for(new i = 0 ;i < NbWeapon ;++i) {
 		if (containi(TabWeapon[i],txtweapon)>-1) {
@@ -780,6 +813,7 @@ public find_weapon(txtweapon[]) {
 			i =  NbWeapon
 		}
 	}
+
 	return weapon_index
 }
 
@@ -809,7 +843,7 @@ public free_weapon(id,weapon_index) {
 
 public give_ammo_to_player(id, weapon[], ammo_pri, ammo_sec) {
 	new weapon_index = 0
-	weapon_index = find_weapon(weapon);
+	weapon_index = get_weapon(weapon);
 
 	if (weapon_index<0) {
 		client_print(id,print_console,"[BB] Cannot find the weapon Index!")
