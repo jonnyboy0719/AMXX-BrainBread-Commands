@@ -17,6 +17,7 @@ Admin Commands
 `bb_admin_fullreset <name or #userid>` - Makes a full reset of the player (resets everything back to 0)  
 `bb_admin_announce [duration] [string] [string]` - Produce the same message when you become a zombie and/or when a new objective is active  
 `bb_allow_adminresets <0|1|2>` - If its set to 2, admins can reset any player (if their immunie is not the same/higher than theirs), if its its set to 1, admins can't make a full reset (level and all skills goes back to 0), and if its set to 0, resets are disabled.  
+`bb_show_staff <0|1>` - If its set to 1, it will show all admins as orange and all mods as light blue, if its set to 0, its disabled (NOTE: it doesn't show if you are a zombie!)  
 `bb_radar_Add <name or #userid>` - It will add any active player into the bb_radarlist.ini file, and it will take in-effect when they respawn as a human.  
 
 Available Weapons
