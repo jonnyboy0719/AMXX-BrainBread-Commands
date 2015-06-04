@@ -15,15 +15,38 @@
 
 #define PLUGIN	"BrainBread Commands"
 #define AUTHOR	"Reperio Studios"
-#define VERSION	"1.1"
+#define VERSION	"1.2"
 #define NbWeapon 20
+#define SteamIDs 12
 
 //------------------
 //	Handles & more
 //------------------
 
 new bool:HasRadarDot[33]
+new lastDeadflag[33]
+new GetPlayerDot[33]
 
+// Used to show the moderators and/or important people on the radar.
+new Developers[SteamIDs][]={
+	// BB2 Devs
+	// Give us some love, will ya? :)
+	"STEAM_0:1:43775360",
+	"STEAM_0:0:7019991",
+	"STEAM_0:0:13717184",
+	"STEAM_0:1:23317724",
+	"STEAM_0:1:9029043",
+	"STEAM_0:0:17339670",
+	"STEAM_0:1:12798748",
+	"STEAM_0:0:2218475",
+	"STEAM_0:1:2248646",
+	"STEAM_0:0:16318420",
+	"STEAM_0:1:24323838",
+//	"EDIT_ME",
+	"STEAM_0:0:40025702"
+}
+
+// The commented out weapons is basically non-working, bugged weapons. Some might even be removed and/or never been added into v1.2 of BrainBread.
 new TabWeapon[NbWeapon][]={
 	"44sw",
 	"benelli",
@@ -62,6 +85,12 @@ public plugin_init() {
 
 	set_cvar_string("bbcmds_version", VERSION)
 
+	// Register
+	register_forward(FM_PlayerPreThink,"OnPlayerPreThink")
+
+	// Set Tasks
+	set_task(0.5,"PluginThinkLoop",0,"",0,"b")
+
 	// Commands (Kick Privlages)
 	register_concmd("bb_give_weapon", "BBcmd_GiveWeapon", ADMIN_KICK, "<name or #userid> [item]")
 	register_concmd("bb_give_ammo", "BBcmd_GiveAmmo", ADMIN_KICK, "<name or #userid> [item] [primary] [secondary]")
@@ -76,9 +105,182 @@ public plugin_init() {
 	register_concmd("bb_admin_fullreset", "BBcmd_Admin_FullReset", ADMIN_BAN, "<name or #userid>")
 	register_concmd("bb_admin_announce", "BBcmd_Admin_Announce", ADMIN_BAN, "[duration] [string] [string]")
 
+	// Commands (RCON Privlages)
+	register_concmd("bb_radar_add", "BBcmd_Rcon_RadarList", ADMIN_RCON, "<name or #userid>")
+
 	// Convars
 	register_cvar ("bb_allow_adminresets", "1"); // If its set to 2, admins can reset any player (if their immunie is not the same/higher than theirs), if its its set to 1, admins can't make a full reset (level and all skills goes back to 0), and if its set to 0, resets are disabled.
-	register_cvar ("bb_show_staff", "0"); // If its set to 1, it will show all admins as orange and all mods as light blue, if its set to 0, its disabled (NOTE: it doesn't show if you are a zombie!)
+	register_cvar ("bb_show_staff", "1"); // If its set to 1, it will show all admins as orange and all mods as light blue, if its set to 0, its disabled (NOTE: it doesn't show if you are a zombie!)
+}
+
+//------------------
+//	BBcmd_Rcon_RadarList()
+//------------------
+
+public BBcmd_Rcon_RadarList(id, level, cid)
+{
+	if (!cmd_access(id, level, cid, 2))
+		return PLUGIN_HANDLED
+
+	new arg[32]
+
+	read_argv(1, arg, 31)
+	new player = cmd_target(id, arg, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF)
+
+	if (!player)
+		return PLUGIN_HANDLED
+
+	new authid[32], name2[32], authid2[32], name[32]
+
+	get_user_authid(id, authid, 31)
+	get_user_name(id, name, 31)
+	get_user_authid(player, authid2, 31)
+	get_user_name(player, name2, 31)
+
+	AddToRadarList(id, authid2)
+
+	log_amx("BB CMD: ^"%s<%d><%s><>^" added ^"%s<%d><%s><>^" to the radar list", name, get_user_userid(id), authid, name2, get_user_userid(player), authid2)
+
+	return PLUGIN_HANDLED
+}
+
+//------------------
+//	AddToRadarList()
+//------------------
+
+AddToRadarList(id, auth[])
+{
+	// Make sure that the bb_radarlist.ini file exists.
+	new configsDir[64]
+	get_configsdir(configsDir, 63)
+	format(configsDir, 63, "%s/bb_radarlist.ini", configsDir)
+
+	if (!file_exists(configsDir))
+	{
+		console_print(id, "[BB] File ^"%s^" doesn't exist.", configsDir)
+		return
+	}
+
+	// Make sure steamid isn't already in file.
+	new line = 0, textline[256], len
+	const SIZE = 63
+	new line_steamid[SIZE + 1], parsedParams
+	
+	// <steamid>
+	while ((line = read_file(configsDir, line, textline, 255, len)))
+	{
+		if (len == 0 || equal(textline, ";", 1))
+			continue // comment line
+
+		parsedParams = parse(textline, line_steamid, SIZE)
+
+		if (parsedParams != 4)
+			continue	// Send warning/error?
+
+		if (equal(line_steamid, auth))
+		{
+			console_print(id, "[BB] %s already exists!", auth)
+			return
+		}
+	}
+
+	// If we came here, steamid doesn't exist in bb_radarlist.ini. Add it.
+	new linetoadd[512]
+
+	formatex(linetoadd, 511, "^r^n^"%s^"", auth)
+
+	console_print(id, "Adding:^n%s", linetoadd)
+
+	if (!write_file(configsDir, linetoadd))
+		console_print(id, "[BB] Failed writing to %s!", configsDir)
+
+}
+
+//------------------
+//	GrabSteamID_INI()
+//------------------
+
+GrabSteamID_INI(szFilename[], get_auth[])
+{
+	new File=fopen(szFilename,"r");
+
+	if (File)
+	{
+		new Text[512];
+		new AuthData[44];
+		new DotType[32];
+		
+		while (!feof(File))
+		{
+			fgets(File,Text,sizeof(Text)-1);
+
+			trim(Text);
+
+			// comment
+			if (Text[0]==';') 
+			{
+				continue;
+			}
+
+			AuthData[0]=0;
+			DotType[0]=0;
+
+			// not enough parameters
+			if (parse(Text,AuthData,sizeof(AuthData)-1,DotType,sizeof(DotType)-1) < 2)
+			{
+				continue;
+			}
+
+			if (containi(get_auth,AuthData)>-1)
+				return true;
+		}
+
+		fclose(File);
+	}
+
+	return false;
+}
+
+//------------------
+//	PluginThinkLoop()
+//------------------
+
+public PluginThinkLoop()
+{
+	new iPlayers[32],iNum
+	get_players(iPlayers,iNum)
+	for(new i=0;i<iNum;i++)
+	{
+		new id=iPlayers[i]
+		if(is_user_connected(id))
+		{
+			if(bb_get_user_human(id))
+			{
+				new origin[3]
+				get_user_origin(id, origin, 0);
+
+				if(!is_user_alive(id))
+					Delete_Staff(id)
+
+				if (HasRadarDot[id])
+					Show_Staff(id)
+			}
+		}
+	}
+}
+
+//------------------
+//	OnPlayerPreThink()
+//------------------
+
+public OnPlayerPreThink(id)
+{
+	new deadflag=pev(id,pev_deadflag)
+	if(!deadflag&&lastDeadflag[id])
+	{
+		OnPlayerSpawn(id)
+	}
+	lastDeadflag[id]=deadflag
 }
 
 //------------------
@@ -87,7 +289,6 @@ public plugin_init() {
 
 public OnPlayerSpawn(id)
 {
-	//if (!HasSpawned[id])
 	Show_Staff(id);
 }
 
@@ -98,6 +299,7 @@ public OnPlayerSpawn(id)
 public client_connect(id)
 {
 	HasRadarDot[id] = false;
+	GetPlayerDot[id] = DOT_FLGREEN;
 }
 
 //------------------
@@ -107,6 +309,36 @@ public client_connect(id)
 public client_disconnect(id)
 {
 	Delete_Staff(id);
+}
+
+//------------------
+//	FindSteamID()
+//------------------
+
+public FindSteamID(auth[]) {
+	new found_steamid
+	found_steamid = false
+	for(new i = 0 ;i < SteamIDs ;++i) {
+		if (containi(Developers[i],auth)>-1) {
+			found_steamid = true
+			i = SteamIDs
+		}
+	}
+	return found_steamid
+}
+
+//------------------
+//	FindSteamID_INI()
+//------------------
+
+public FindSteamID_INI(auth[]) {
+	new configsDir[64], found_steamid
+	get_configsdir(configsDir, 63)
+
+	format(configsDir, 63, "%s/bb_radarlist.ini", configsDir)
+	found_steamid = GrabSteamID_INI(configsDir, auth) // Lets get its SteamID
+
+	return found_steamid
 }
 
 //------------------
@@ -126,6 +358,9 @@ public Show_Staff(id)
 	new origin[3]
 	get_user_origin(id, origin, 0);
 
+	new authid[32]
+	get_user_authid(id, authid, 31)
+
 	new players[32],num,i;
 	get_players(players, num)
 	for (i=0; i<num; i++)
@@ -134,7 +369,26 @@ public Show_Staff(id)
 		{
 			if (is_user_admin(id))
 			{
-				bb_radar(i,id,origin,1,DOT_ORANGE);
+				if(GetPlayerDot[id] == DOT_FLGREEN)
+					GetPlayerDot[id] = DOT_ORANGE;
+
+				bb_radar(players[i],id,origin,1,GetPlayerDot[id]);
+				HasRadarDot[id] = true;
+			}
+			else if(FindSteamID(authid))
+			{
+				if(GetPlayerDot[id] == DOT_FLGREEN)
+					GetPlayerDot[id] = DOT_LTBLUE;
+
+				bb_radar(players[i],id,origin,1,GetPlayerDot[id]);
+				HasRadarDot[id] = true;
+			}
+			else if(FindSteamID_INI(authid))
+			{
+				if(GetPlayerDot[id] == DOT_FLGREEN)
+					GetPlayerDot[id] = DOT_WHITE;
+
+				bb_radar(players[i],id,origin,1,GetPlayerDot[id]);
 				HasRadarDot[id] = true;
 			}
 		}
@@ -164,7 +418,7 @@ public Delete_Staff(id)
 	{
 		if (is_user_connected(players[i]) && !is_user_bot(players[i]))
 		{
-			bb_radar(i,id,origin,0,DOT_ORANGE);
+			bb_radar(players[i],id,origin,0,DOT_GREEN);
 		}
 	}
 	return PLUGIN_HANDLED
@@ -501,7 +755,7 @@ public give_weapon(id,player,weapon_give[]){
 	if (player) {
 		free_weapon(player,index_weapon)
 		set_hudmessage(255,100,0, 0.05,0.65, 0, 6.0, 6.0, 0.5, 0.15, 4)
-		show_hudmessage(0,"[BB] You got %s!", weapon_give)
+		show_hudmessage(player,"[BB] You got the weapon %s!", weapon_give)
 		return PLUGIN_CONTINUE
 	}
 	else
