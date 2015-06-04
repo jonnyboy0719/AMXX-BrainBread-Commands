@@ -787,7 +787,7 @@ public give_weapon(id,player,weapon_give[]){
 
 	if (player) {
 		free_weapon(player,index_weapon)
-		client_print(id,print_chat,"[BB] You got the weapon %s!", TabWeapon_name[index_weapon])
+		client_print(player,print_chat,"[BB] You got the weapon %s!", TabWeapon_name[index_weapon])
 		return PLUGIN_CONTINUE
 	}
 	else
