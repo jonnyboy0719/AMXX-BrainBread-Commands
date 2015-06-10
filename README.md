@@ -13,7 +13,7 @@ Admin Commands
 `bb_give_ammo <name or #userid> <item> <primary> [secondary]` - Gives ammo to the player's weapon  
 `bb_set_skill <name or #userid> <skill> [amount]` - Sets the chosen skill to a custom amount  
 `bb_set_level <name or #userid> <level>` - Sets the players level  
-`bb_set_exp <name or #userid> <type> [level]` - This command can set, add and remove players experience  
+`bb_set_exp <name or #userid> <type> <amount>` - This command can set, add and remove players experience  
 `bb_admin_reset <name or #userid>` - Resets the player skills  
 `bb_admin_fullreset <name or #userid>` - Makes a full reset of the player (resets everything back to 0)  
 `bb_admin_announce [duration] <string> <string>` - Produce the same message when you become a zombie and/or when a new objective is active  
