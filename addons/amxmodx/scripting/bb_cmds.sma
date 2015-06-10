@@ -15,7 +15,7 @@
 
 #define PLUGIN	"BrainBread Commands"
 #define AUTHOR	"Reperio Studios"
-#define VERSION	"1.4"
+#define VERSION	"1.5"
 #define NbWeapon 19
 #define SteamIDs 12
 
@@ -450,7 +450,7 @@ public Delete_Staff(id)
 	{
 		if (is_user_connected(players[i]) && !is_user_bot(players[i]))
 		{
-			bb_radar(players[i],id,origin,0,DOT_GREEN);
+			bb_radar(players[i],id,origin,0,GetPlayerDot[id]);
 		}
 	}
 	return PLUGIN_HANDLED
@@ -514,7 +514,7 @@ public BBcmd_Admin_FullReset(id, level, cid)
 
 	new authid[32], name2[32], authid2[32], name[32]
 
-	FullReset(player);
+	FullReset(player,true,id);
 
 	get_user_authid(id, authid, 31)
 	get_user_name(id, name, 31)
@@ -966,10 +966,61 @@ public ResetSkills(id)
 }
 
 //------------------
+//	FullResetAdminPrint()
+//------------------
+
+public FullResetAdminPrint(adminid, name[], steamid[], level, Float:exp, hps, skill, speed, points)
+{
+	// Make sure that the bb_adminresets.log file exists.
+	new configsDir[64]
+	get_configsdir(configsDir, 63)
+	format(configsDir, 63, "%s/bb_adminresets.log", configsDir)
+
+	if (!file_exists(configsDir))
+	{
+		console_print(adminid, "[BB] File ^"%s^" doesn't exist.", configsDir)
+		return
+	}
+
+	// Lets not insert the log on comments
+	new line = 0, textline[256], len
+
+	while ((line = read_file(configsDir, line, textline, 255, len)))
+	{
+		if (len == 0 || equal(textline, ";", 1))
+			continue // comment line
+	}
+
+	// Lets add the info on the log!
+	new linetoadd[612], adminname[32], date[62]
+
+	get_time("%d-%m-%Y", date, 61)
+
+	get_user_name(adminid, adminname, 31)
+
+	// timeleft/date
+	new iHours, iMinutes, iSeconds;
+
+	iSeconds = get_timeleft( );
+	iMinutes = iSeconds / 60;
+	iHours   = iMinutes / 60;
+	iSeconds = iSeconds - iMinutes * 60;
+	iMinutes = iMinutes - iHours * 60;
+
+	formatex(linetoadd, 611, "^r^nAdmin ^"%s^" has made a full reset on ^"%s^"^nTime: %d:%02d:%02d^nDate: %s^n==== FULL STATS BEFORE RESET ====^nName: %s^nSteamID: %s^nLVL: %d^nEXP: %i^nHPS: %d^nSkill: %d^nSpeed: %d^nPoints: %d^n==== END ====^n^n", adminname, name, iHours, iMinutes, iSeconds, date, name, steamid, level, floatround(exp), hps, skill, speed, points);
+
+	console_print(adminid, "Added to log:^n%s", linetoadd)
+
+	if (!write_file(configsDir, linetoadd))
+		console_print(adminid, "[BB] Failed writing to %s!", configsDir)
+
+}
+
+//------------------
 //	FullReset()
 //------------------
 
-public FullReset(id)
+public FullReset(id,admin,adminid)
 {
 	// Lets print the old stats
 	new hps, skill, level, speed, points;
@@ -984,6 +1035,10 @@ public FullReset(id)
 
 	get_user_authid(id, steamid, 31)
 	get_user_name(id, name, 31)
+
+	// If an admin did the reset, lets print it to a file, or to our defined SQL
+	if (admin)
+		FullResetAdminPrint(adminid, name, steamid, level, Float:exp, hps, skill, speed, points);
 
 	// Lets display it for the client
 	client_print ( id, print_console, "==----------[[ ORIGINAL STATS ]]--------------==" )
