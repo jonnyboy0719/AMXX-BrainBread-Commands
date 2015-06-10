@@ -15,7 +15,7 @@
 
 #define PLUGIN	"BrainBread Commands"
 #define AUTHOR	"Reperio Studios"
-#define VERSION	"1.3"
+#define VERSION	"1.4"
 #define NbWeapon 19
 #define SteamIDs 12
 
@@ -128,6 +128,9 @@ public plugin_init() {
 	register_concmd("bb_set_skill", "BBcmd_SetSkill", ADMIN_BAN, "<name or #userid> [skill] [amount]")
 	register_concmd("bb_set_level", "BBcmd_SetLevel", ADMIN_BAN, "<name or #userid> [level]")
 	register_concmd("bb_set_points", "BBcmd_SetPoints", ADMIN_BAN, "<name or #userid> [amount]")
+
+	// Commands (Config Privlages)
+	register_concmd("bb_set_exp", "BBcmd_SetEXP", ADMIN_CFG, "<name or #userid> <type> [amount]")
 
 	// Commands (Admin values)
 	register_concmd("bb_admin_reset", "BBcmd_Admin_Reset", ADMIN_BAN, "<name or #userid>")
@@ -693,6 +696,68 @@ public BBcmd_SetSkill(id, level, cid)
 	get_user_name(player, name2, 31)
 
 	log_amx("BB CMD: ^"%s<%d><%s><>^" have set ^"%s<%d><%s><>^" skill %s to %d", name, get_user_userid(id), authid, name2, get_user_userid(player), authid2, bb_set_skill_name, bb_set_skill)
+
+	return PLUGIN_HANDLED
+}
+
+//------------------
+//	BBcmd_SetEXP()
+//------------------
+
+public BBcmd_SetEXP(id, level, cid)
+{
+	if (!cmd_access(id, level, cid, 2))
+		return PLUGIN_HANDLED
+
+	new arg[32]
+
+	read_argv(1, arg, 31)
+	new player = cmd_target(id, arg, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF)
+
+	if (!player)
+		return PLUGIN_HANDLED
+
+	new bb_set_exp_name[32], get_set_exp_name[32], authid[32], name2[32], authid2[32], name[32], bb_amount[32]
+
+	read_argv(2, bb_set_exp_name, 31)
+	read_argv(3, bb_amount, 31)
+
+	new bb_set_amount = str_to_num(bb_amount)
+
+	if (bb_set_amount < -1) {
+		client_print(id,print_console,"[BB] You need to specify an amount!")
+		return PLUGIN_HANDLED
+	}
+
+	new Type_Set[]="set";
+	new Type_Remove[]="remove";
+	new Type_Add[]="add";
+
+	if (containi(Type_Set,bb_set_exp_name) != -1) {
+		bb_set_user_exp(player,float(bb_set_amount))
+		get_set_exp_name = "set";
+	}
+	else if (containi(Type_Remove,bb_set_exp_name) != -1) {
+		bb_remove_user_exp(player,float(bb_set_amount))
+		get_set_exp_name = "removed";
+	}
+	else if (containi(Type_Add,bb_set_exp_name) != -1) {
+		bb_update_user_exp(player,float(bb_set_amount))
+		get_set_exp_name = "added";
+	}
+	else
+	{
+		client_print(id,print_console,"[BB] %s is not valid! The valid types are the following:", bb_set_exp_name)
+		client_print(id,print_console,"[BB] add, remove, set")
+		return PLUGIN_HANDLED
+	}
+
+	get_user_authid(id, authid, 31)
+	get_user_name(id, name, 31)
+	get_user_authid(player, authid2, 31)
+	get_user_name(player, name2, 31)
+
+	log_amx("BB CMD: ^"%s<%d><%s><>^" have %s ^"%s<%d><%s><>^" EXP to %d", name, get_user_userid(id), authid, get_set_exp_name, name2, get_user_userid(player), authid2, bb_set_amount)
 
 	return PLUGIN_HANDLED
 }

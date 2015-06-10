@@ -99,8 +99,18 @@ stock bb_set_user_exp(id,Float:exp) {
 	return set_pdata_float(id,4,exp, -1);
 }
 
+/*
+	Adds EXP to the player
+*/
 stock bb_update_user_exp(id,Float:exp) {
 	return set_pdata_float(id,4, bb_get_user_exp(id) + exp, -1);
+}
+
+/*
+	Removes EXP from the player
+*/
+stock bb_remove_user_exp(id,Float:exp) {
+	return set_pdata_float(id,4, bb_get_user_exp(id) - exp, -1);
 }
 
 /* Returns Available Skill Points of player */
@@ -356,6 +366,12 @@ stock bb_set_user_minigun_ammo(id,ammo) {
 	return 0;
 }
 
+
+/* Returns if player is a human */
+stock bb_get_user_human(id) {
+	return (entity_get_int(id,EV_INT_team) == 1) ? 1 : 0;
+}
+
 /* Returns if player is a zombie */
 stock bb_get_user_zombie(id) {
 	return (entity_get_int(id,EV_INT_team) == 2) ? 1 : 0;
@@ -408,7 +424,7 @@ stock bb_set_user_zombie(id,zombie) {
 	entity_set_vector(id,EV_VEC_v_angle,v_angle);
 
 	strip_user_weapons(id);
-	bb_give_item(id,(team == 2) ? "weapon_hand" : "weapon_knife");
+	bb_give_item_ex(id,(team == 2) ? "weapon_hand" : "weapon_knife");
 
 	set_pdata_int(id,415,1);
 
